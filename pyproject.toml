@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ContactHelper"
+version = "0.1.0"
+description = "Contact helper functions"
+authors = [
+    {name = "Team", email = "team@example.com"},
+]
+dependencies = ["colorama"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
