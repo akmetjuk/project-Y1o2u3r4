@@ -6,26 +6,36 @@
 
 from collections import UserDict
 from src.ContactHelper.models.contact import Contact
-from utils import validate_phone_number, validate_email
+from src.ContactHelper.utils import validate_phone_number, validate_email
 
 
 class AddressBook(UserDict):
     '''Клас для роботи з контактами'''
     def __init__(self):
         super().__init__()
+        # Прапорець для відстеження змін у адресній книзі, який буде використовуватися для визначення, чи потрібно зберігати зміни при виході з програми.
+        self._ischanged = False
     
     def __str__(self) -> str:
         return f'AddressBook with {len(self.data)} contacts'
-    
-    def add_contact(self, contact: Contact) -> bool:
+ 
+    @property
+    def ischanged(self) -> bool:
+        '''Повертає True, якщо адресна книга була змінена, інакше повертає False'''
+        return self._ischanged
+
+    def add_contact(self, name: str, phone: str = None, email: str = None, birthday: str = None) -> bool:
         '''Додає контакт до адресної книги
         Args:
-            contact (Contact): контакт для додавання
+            name (str): ім'я контакту
+            phone (str): телефонний номер контакту
+            email (str): email контакту
+            birthday (str): дата народження контакту у форматі YYYY-MM-DD
         Raises:
             ValueError: якщо контакт з таким ім'ям вже існує
         Returns:
             bool: True, якщо контакт додано, False в іншому випадку'''
-        pass
+        pass        
 
     def get_contact(self, name: str) -> Contact:
         '''Повертає контакт за ім'ям
@@ -43,7 +53,7 @@ class AddressBook(UserDict):
             bool: True, якщо контакт видалено, False в іншому випадку'''
         pass
 
-    def setbirthday(self, name: str, date: str) -> bool:
+    def set_birthday(self, name: str, date: str) -> bool:
         '''Встановлює дату народження для контакту
         Args:
             name (str): ім'я контакту для якого потрібно встановити дату народження
@@ -54,7 +64,7 @@ class AddressBook(UserDict):
             bool: True, якщо дата народження встановлена, False в іншому випадку'''
         pass
 
-    def updatephone(self, name: str, new_phone: str, phone: str = None) -> bool:
+    def update_phone(self, name: str, new_phone: str, phone: str = None) -> bool:
         '''Додає або оновлює телефонний номер для контакту
         Args:
             name (str): ім'я контакту для якого потрібно додати телефонний номер

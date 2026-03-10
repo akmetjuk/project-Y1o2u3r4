@@ -13,7 +13,7 @@ def validate_phone_number(phone_number: str) -> str:
     Raises:
         ValueError: якщо телефонний номер не відповідає формату +380XXXXXXXXX
     """
-    pass
+    return phone_number
 
 def validate_email(email: str) -> str:
     """Повертає електронну пошту, якщо її можна вважати валідною або повертає помилку
@@ -24,4 +24,4 @@ def validate_email(email: str) -> str:
     Raises:
         ValueError: якщо електронна пошта не відповідає формату user@example.com
     """
-    pass
+    return email
