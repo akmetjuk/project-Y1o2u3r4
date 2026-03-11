@@ -1,3 +1,5 @@
+from colorama import Fore, init
+
 from .fields import Email, Phone, Birthday, Address
 from src.ContactHelper.utils import validate_phone_number, validate_email
 
@@ -11,6 +13,38 @@ class Contact:
         self._address: Address = None
         self._email: Email = None
 
+    def __str__(self) -> str:
+        init(autoreset=True)
+        repres: str = f"Contact name: {Fore.YELLOW}{self.name}{Fore.RESET}"
+        if self._email:
+            repres += f", email: {self._email}"
+        if self._phones:
+            phones: str = '; '.join(p for p in self._phones).strip()
+            if len(phones) > 1:
+                repres += f", phones: {phones}"
+        if self._birthday:
+            repres += f", {self._birthday}"
+        if self._address:
+            repres += f", address: {self._address}"
+        return repres
+
+    def table_repr(self) -> str:
+        '''Повертає рядок для відображення контакту у вигляді таблиці
+        з кольоровим виділенням полів: ім'я - жовтий,
+        електронна пошта - магента,
+        телефон - зелений, адреса - синій, дата народження - жовтий
+        у форматі DD.MM.YYYY
+        Returns:
+            str: рядок для відображення контакту у вигляді таблиці'''
+        init(autoreset=True)
+        name: str = f"{Fore.YELLOW}{self.name}{Fore.RESET}"
+        email: str = f"{self._email}"
+        phones: str = '; '.join(p for p in self._phones).strip()
+        phones = f"{phones}"
+        birthday: str = f"{self._birthday}"
+        address: str = f"{self._address.value}"
+        return f"{name} | {email} | {phones} | {birthday} | {address}"
+
     @property
     def name(self) -> str:
         """Повертає ім'я контакту"""
@@ -23,13 +57,14 @@ class Contact:
         return self._birthday
 
     @birthday.setter
-    def update_birthday(self, date: str) -> bool:
+    def birthday(self, date: str) -> bool:
         '''Встановлює дату народження для контакту
         Args:
             date (str): дата народження у форматі DD.MM.YYYY
         Returns:
             bool: True, якщо дата народження оновлена успішно
         '''
+        date = date.strip() if date else None
         if not date:
             return False
         if self._birthday:
