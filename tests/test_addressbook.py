@@ -34,3 +34,17 @@ def test_add_phone():
 
     assert len(contact.phones) == 1
     assert contact.phones[0].value == "+380123456789"
+
+def test_incorrect_phone():
+    contact: Contact = Contact("Tom")
+    try:
+        contact.change_phone("abc123")
+    except ValueError as e:
+        assert str(e) in ("Phone number must be in format +380XXXXXXXXX","Phone number must be a string")
+
+def test_incorrect_email():
+    contact: Contact = Contact("Alice")
+    try:
+        contact.email = "invalid_email"
+    except ValueError as e:
+        assert str(e) in ("Email must be in format user@example.com","Email must be a string")
