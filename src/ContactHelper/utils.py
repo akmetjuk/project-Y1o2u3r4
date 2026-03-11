@@ -7,6 +7,7 @@ ToDo:
 - додайте функцію валідації електронної пошти, яка буде перевіряти чи
 електронна пошта відповідає формату user@example.com
 '''
+import re
 
 
 def validate_phone_number(phone_number: str) -> str:
@@ -22,14 +23,18 @@ def validate_phone_number(phone_number: str) -> str:
     if not isinstance(phone_number, str):
         raise ValueError("Phone number must be a string")
 
-    if len(phone_number) != 13:
-        raise ValueError("Phone number must be in format +380XXXXXXXXX")
+    digits = re.sub(r"\D", "", phone_number)
 
-    if not phone_number.startswith("+380"):
-        raise ValueError("Phone number must be in format +380XXXXXXXXX")
+    if re.fullmatch(r"380\d{9}", digits):
+        return f"+{digits}"
 
-    if not phone_number[1:].isdigit():
-        raise ValueError("Phone number must be in format +380XXXXXXXXX")
+    if re.fullmatch(r"0\d{9}", digits):
+        return f"+38{digits}"
+
+    if re.fullmatch(r"\d{9}", digits):
+        return f"+380{digits}"
+
+    raise ValueError("Phone number must be in format +380XXXXXXXXX")
 
 
 def validate_email(email: str) -> str:
@@ -46,15 +51,10 @@ def validate_email(email: str) -> str:
     if not isinstance(email, str):
         raise ValueError("Email must be a string")
 
-    if "@" not in email or email.count("@") != 1:
-        raise ValueError("Email must be in format user@example.com")
+    email = email.strip()
 
-    user, domain = email.split("@")
-    if not user or not domain:
-        raise ValueError("Email must be in format user@example.com")
-
-    if "." not in domain:
+    pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+    if not re.fullmatch(pattern, email):
         raise ValueError("Email must be in format user@example.com")
 
     return email
-    
