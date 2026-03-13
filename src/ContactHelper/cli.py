@@ -1,13 +1,10 @@
-'''CLI (Command Line Interface) для роботи з контактами - основний модуль для взаємодії з користувачем через командний рядок.'''
-'''ToDo:
-- додайте функцію для пошуку контактів за іменем, прізвищем або номером телефону
-- додайте функцію для видалення контакту за іменем
-- додайте функцію для оновлення інформації про контакт (наприклад, змінити номер телефону або електронну пошту)
-- додайте функцію для виведення всіх контактів у вигляді таблиці
-'''# src/ContactHelper/cli.py
-
 from src.ContactHelper.core import AddressBook
 from src.ContactHelper.models.contact import Contact
+from ContactHelper.logger import setup_logger
+
+
+logger = setup_logger()
+logger.info("Application started")
 
 
 def format_contact(contact: Contact) -> str:
@@ -111,11 +108,15 @@ def main():
             birthday = args[3] if len(args) > 3 else None
 
             try:
-                result = book.add_contact(name, phone=phone, email=email, birthday=birthday)
+                result = book.add_contact(name,
+                                          phone=phone,
+                                          email=email,
+                                          birthday=birthday)
                 if result:
                     print(f"Contact '{name}' added.")
                 else:
-                    print(f"Contact '{name}' was not added (maybe already exists?).")
+                    print(f"Contact '{name}' was",
+                          "not added (maybe already exists?).")
             except ValueError as e:
                 # валідація телефона/email/дати
                 print(f"Validation error: {e}")
@@ -188,7 +189,8 @@ def main():
                 result = book.update_phone(name, new_phone, phone=old_phone)
                 if result:
                     if old_phone:
-                        print(f"Phone '{old_phone}' for '{name}' replaced with '{new_phone}'.")
+                        print(f"Phone '{old_phone}' for '{name}'",
+                              f"replaced with '{new_phone}'.")
                     else:
                         print(f"Phone '{new_phone}' added for '{name}'.")
                 else:
@@ -205,9 +207,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-from ContactHelper.logger import setup_logger
-
-
-logger = setup_logger()
-
-logger.info("Application started")
