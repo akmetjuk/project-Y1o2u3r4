@@ -1,4 +1,8 @@
-from .fields import Email, Phone, Birthday, Address
+from datetime import date
+
+from colorama import Fore, init
+
+from .fields import Email, Phone, Birthday, Address, Notes, Tag
 from src.ContactHelper.utils import validate_phone_number, validate_email
 
 
@@ -10,6 +14,46 @@ class Contact:
         self._birthday: Birthday = None
         self._address: Address = None
         self._email: Email = None
+        self._created_at: str = date.today().strftime("%Y-%m-%d %H:%M:%S")
+        self._ischanged: bool = False
+        self._changed_at: str = self._created_at
+        self._tags: set[Tag] = set()
+        self._notes: Notes = None
+
+    def __str__(self) -> str:
+        init(autoreset=True)
+        repres: str = f"Contact name: {Fore.YELLOW}{self.name}{Fore.RESET}"
+        if self._email:
+            repres += f", email: {self._email}"
+        if self._phones:
+            phones: str = '; '.join(p for p in self._phones).strip()
+            if len(phones) > 1:
+                repres += f", phones: {phones}"
+        if self._birthday:
+            repres += f", {self._birthday}"
+        if self._address:
+            repres += f", address: {self._address}"
+        return repres
+
+    def __changed(self) -> bool:
+        self._changed_at = date.today().strftime("%Y-%m-%d %H:%M:%S")
+        self._ischanged = True
+        return True
+
+    def table_repr(self) -> str:
+        return self.__str__()
+
+    @property
+    def created_at(self) -> str:
+        """Повертає дату та час створення контакту
+        у форматі YYYY-MM-DD HH:MM:SS"""
+        return self._created_at
+
+    @property
+    def changed_at(self) -> str:
+        """Повертає дату та час останнього змінення
+        контакту у форматі YYYY-MM-DD HH:MM:SS"""
+        return self._changed_at
 
     @property
     def name(self) -> str:
@@ -23,19 +67,21 @@ class Contact:
         return self._birthday
 
     @birthday.setter
-    def update_birthday(self, date: str) -> bool:
+    def birthday(self, date: str) -> bool:
         '''Встановлює дату народження для контакту
         Args:
             date (str): дата народження у форматі DD.MM.YYYY
         Returns:
             bool: True, якщо дата народження оновлена успішно
         '''
+        date = date.strip() if date else None
         if not date:
             return False
         if self._birthday:
             if self._birthday.value == date:
                 return False
         self._birthday = Birthday(date)
+        return self.__changed()
 
     @property
     def address(self) -> Address | None:
@@ -54,7 +100,7 @@ class Contact:
             if self._address.value == value:
                 return False
         self._address = Address(value)
-        return True
+        return self.__changed()
 
     @property
     def phones(self) -> list[Phone] | None:
@@ -88,7 +134,7 @@ class Contact:
         phone_obj = self.find_phone(phone)
         if phone_obj:
             self.phones.remove(phone_obj)
-            return True
+            return self.__changed()
         return False
 
     def change_phone(self, new_phone: str, phone: str = None) -> bool:
@@ -115,10 +161,10 @@ class Contact:
             for p in self._phones:
                 if p.value == phone:
                     p.change_phone(new_phone)
-                    return True
+                    return self.__changed()
             return False
         self._phones.append(Phone(new_phone))
-        return True
+        return self.__changed()
 
     @property
     def email(self) -> Email:
@@ -144,4 +190,69 @@ class Contact:
         if self._email == email:
             return False
         self._email = email
-        return True
+        return self.__changed()
+
+    @property
+    def tags(self) -> set[Tag]:
+        """Повертає набір тегів контакту або порожній набір,
+        якщо теги не встановлені"""
+        return self._tags
+
+    @tags.setter
+    def tags(self, value: set[str]) -> bool:
+        '''Встановлює теги для контакту
+        Args:
+            value (set[str]): набір тегів для встановлення
+        Returns:
+            bool: True, якщо теги оновлені успішно, False в іншому випадку
+        '''
+        if not value:
+            return False
+        new_tags: set[Tag] = set(Tag(tag) for tag in value)
+        if self._tags == new_tags:
+            return False
+        self._tags = new_tags
+        return self.__changed()
+
+    def remove_tags(self, value: set[str]) -> bool:
+        '''Видаляє теги з контакту
+        Args:
+            value (set[str]): набір тегів для видалення
+        Returns:
+            bool: True, якщо теги видалені успішно, False в іншому випадку
+        '''
+        if not value:
+            return False
+        tags_to_remove: set[Tag] = set(Tag(tag) for tag in value)
+        if not tags_to_remove.issubset(self._tags):
+            return False
+        self._tags.difference_update(tags_to_remove)
+        return self.__changed()
+
+    @property
+    def notes(self) -> Notes | None:
+        """Повертає нотатки контакту або None, якщо нотатки не встановлені"""
+        return self._notes
+
+    @notes.setter
+    def notes(self, value: str) -> bool:
+        '''Встановлює нотатки для контакту
+        Args:
+            value (str): текст нотаток для встановлення
+        Returns:
+            bool: True, якщо нотатки оновлені успішно, False в іншому випадку
+        '''
+        if not value:
+            return False
+        if self._notes and self._notes.value == value:
+            return False
+        self._notes = Notes(value)
+        return self.__changed()
+
+    def pop_notes(self) -> bool:
+        '''Видаляє нотатки з контакту
+        Returns:
+            bool: True, якщо нотатки видалені успішно, False в іншому випадку
+        '''
+        self._notes = None
+        return self.__changed()

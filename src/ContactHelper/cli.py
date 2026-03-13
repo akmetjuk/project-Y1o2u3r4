@@ -205,3 +205,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+from ContactHelper.logger import setup_logger
+
+
+logger = setup_logger()
+
+logger.info("Application started")

@@ -8,6 +8,13 @@ class Field:
     def __init__(self, value):
         self.value = value.strip()
 
+    def __str__(self) -> str:
+        '''Повертає рядок для відображення поля
+        Returns:
+            str: рядок для відображення поля
+        '''
+        return self.value if self.value else ''
+
 
 class Phone(Field):
     def __init__(self, value: str):
@@ -15,6 +22,10 @@ class Phone(Field):
 
     def change_phone(self, value: str):
         self.value = validate_phone_number(value)
+
+    def __str__(self) -> str:
+        init(autoreset=True)
+        return f"{Fore.GREEN}{self.value}{Fore.RESET}"
 
 
 class Birthday(Field):
@@ -39,6 +50,10 @@ class Address(Field):
     def __init__(self, value: str):
         super().__init__(value)
 
+    def __str__(self) -> str:
+        init(autoreset=True)
+        return f"{Fore.CYAN}{self.value}{Fore.RESET}"
+
 
 class Email(Field):
     def __init__(self, value: str):
@@ -46,3 +61,25 @@ class Email(Field):
 
     def change_email(self, value: str):
         self.value = validate_email(value)
+
+    def __str__(self) -> str:
+        init(autoreset=True)
+        return f"{Fore.MAGENTA}{self.value}{Fore.RESET}"
+
+
+class Tag(Field):
+    def __init__(self, value: str):
+        super().__init__(value)
+
+    def __str__(self) -> str:
+        init(autoreset=True)
+        return f"{Fore.YELLOW}{self.value}{Fore.RESET}"
+
+
+class Notes(Field):
+    def __init__(self, value: str):
+        super().__init__(value)
+
+    def __str__(self) -> str:
+        init(autoreset=True)
+        return f"{Fore.BLUE}{self.value}{Fore.RESET}"
