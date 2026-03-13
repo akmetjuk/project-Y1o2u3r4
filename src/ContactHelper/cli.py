@@ -1,10 +1,19 @@
 from src.ContactHelper.core import AddressBook
 from src.ContactHelper.models.contact import Contact
-from ContactHelper.logger import setup_logger
-
+from src.ContactHelper.logger import setup_logger
+import difflib
+import pathlib
 
 logger = setup_logger()
 logger.info("Application started")
+
+__commands__ = ["add", "get", "delete",
+                "update-phone",
+                "set-birthday",
+                "help", "quit", "exit"]
+'''List of available commands for CLI.
+This is just a reference and not used in code.
+The actual command handling is done in the main() function below.'''
 
 
 def format_contact(contact: Contact) -> str:
@@ -67,13 +76,16 @@ def print_help():
     print("      new_phone format: +380XXXXXXXXX")
     print("      If old_phone given, it will be replaced.")
     print("")
-    print("  exit")
+    print("  exit | quit")
     print("      Exit the program.")
     print("")
 
 
 def main():
-    book = AddressBook()
+    current_dir = pathlib.Path(__file__).parent
+    adressbook_path: str = str(current_dir / "addressbook.pkl")
+
+    book = AddressBook.load_data(adressbook_path)  # Завантаження адресної книги при запуску програми
     print("Welcome to ContactHelper CLI!")
     print("Type 'help' to see available commands.\n")
 
@@ -202,7 +214,11 @@ def main():
 
         # ===== unknown command =====
         else:
-            print("Unknown command. Type 'help' to see available commands.")
+            match = difflib.get_close_matches(command, __commands__, n=1)
+            if match:
+                print(f"Unknown command. Did you mean '{match[0]}'?")
+            else:
+                print("Unknown command. Type 'help' to see available commands.")
 
 
 if __name__ == "__main__":

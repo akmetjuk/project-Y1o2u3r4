@@ -1,4 +1,5 @@
 from collections import UserDict
+import pickle
 from src.ContactHelper.models.contact import Contact
 import logging
 
@@ -10,7 +11,8 @@ class AddressBook(UserDict):
     '''Клас для роботи з контактами'''
     def __init__(self):
         super().__init__()
-        self._ischanged = False
+        self._ischanged: bool = False
+        self._version: int = 1
 
     def __str__(self) -> str:
         return f'AddressBook with {len(self.data)} contacts'
@@ -20,6 +22,11 @@ class AddressBook(UserDict):
         '''Повертає True, якщо адресна книга
         була змінена, інакше повертає False'''
         return self._ischanged
+
+    @property
+    def version(self) -> int:
+        '''Повертає поточну версію адресної книги'''
+        return self._version
 
     def find(self, name: str) -> Contact | None:
         """
@@ -36,8 +43,19 @@ class AddressBook(UserDict):
         Args:
             filename (str): ім'я файлу для збереження даних
         '''
+        if not self.data or not self._ischanged:
+            return False
+        if not filename:
+            if self._filename:
+                filename = self._filename
+            else:
+                raise ValueError("Filename is not specified.")
+
+        self._version += 1
+        self._ischanged = False
+        with open(filename, "wb") as f:
+            pickle.dump(self, f)
         logger.info(f"Successfully saved data to {filename}")
-        pass
 
     @classmethod
     def load_data(cls, filename: str) -> 'AddressBook':
@@ -45,13 +63,24 @@ class AddressBook(UserDict):
         Args:
             filename: Шлях до файлу для завантаження
         Returns:
-            Завантажена адресна книга або нова, якщо файл не знайдено
+            Завантажена адресна книга або нова,
+            якщо файл не знайдено
         Raises:
             ValueError якщо файл не вказаний або
             не знайдено або виникли проблеми з читанням файлу
-        """
-        logger.info(f"Successfully loaded data from {filename}")
-        pass
+        """        
+        if not filename:
+            raise ValueError("Filename is not specified.")
+        try:
+            with open(filename, "rb") as f:
+                book = pickle.load(f)
+                book._filename = filename
+                book._ischanged = False
+                logger.info(f"Successfully loaded data from {filename}")
+                return book
+        except FileNotFoundError:
+            logger.warning(f"File '{filename}' not found. Creating new AddressBook.")
+            return AddressBook()  # Повернення нової адресної книги, якщо файл не знайдено
 
     def get_upcoming_birthdays(self, days: int = 7) -> list[Contact] | None:
         """Отримати список користувачів з днями
@@ -238,3 +267,99 @@ class AddressBook(UserDict):
             self._ischanged = True
             return True
         return False
+
+    def add_tag(self, name: str, tags: str) -> bool:
+        '''Додає тег для контакту
+        Args:
+            name (str): ім'я контакту для якого
+            потрібно додати тег
+            tags (str): теги для додавання
+        Raises:
+            ValueError: якщо контакт з вказаним ім'ям не знайдено
+        Returns:
+            bool: True, якщо тег додано, False в іншому випадку'''
+        contact: Contact = self.find(name)
+        if not contact:
+            raise KeyError(f"Contact '{name}' not found.")
+        try:
+            contact.tags = set(tags.split(' '))
+            logger.info(f"added tag {tags} to contact {contact.name}")
+            self._ischanged = True
+            return True
+        except AttributeError:
+            raise ValueError("Invalid tag format.")
+
+    def delete_tag(self, name: str, tag: str) -> bool:
+        '''Видаляє тег для контакту
+        Args:
+            name (str): ім'я контакту для якого
+            потрібно видалити тег
+            tag (str): тег для видалення
+        Raises:
+            ValueError: якщо контакт з вказаним ім'ям не знайдено
+        Returns:
+            bool: True, якщо тег видалено, False в іншому випадку'''
+        contact: Contact = self.find(name)
+        if not contact:
+            raise KeyError(f"Contact '{name}' not found.")
+        if contact.remove_tag(tag):
+            logger.info(f"deleted tag {tag} from contact {contact.name}")
+            self._ischanged = True
+            return True
+        return False
+
+    def find_by_tag(self, tag: str) -> list[Contact] | None:
+        '''Знаходить контакти за тегом
+        Args:
+            tag (str): тег для пошуку
+        Returns:
+            list[Contact]: список контактів з вказаним тегом або None, якщо не знайдено'''
+        return [contact for contact in self.data.values() if tag in contact.tags]
+
+    def set_notes(self, name: str, notes: str) -> bool:
+        '''Додає нотатку для контакту
+        Args:
+            name (str): ім'я контакту для якого
+            потрібно додати нотатку
+            notes (str): нотатки для додавання
+        Raises:
+            ValueError: якщо контакт з вказаним ім'ям не знайдено
+        Returns:
+            bool: True, якщо нотатки додано, False в іншому випадку'''
+        contact: Contact = self.find(name)
+        if not contact:
+            raise KeyError(f"Contact '{name}' not found.")
+        try:
+            contact.notes = notes.strip()
+            logger.info(f"added notes {notes[:30]} to contact {contact.name}")
+            self._ischanged = True
+            return True
+        except AttributeError:
+            raise ValueError("Invalid notes format.")
+
+    def delete_notes(self, name: str) -> bool:
+        '''Видаляє нотатку для контакту
+        Args:
+            name (str): ім'я контакту для якого
+            потрібно видалити нотатку
+        Raises:
+            ValueError: якщо контакт з вказаним ім'ям не знайдено
+        Returns:
+            bool: True, якщо нотатки видалено, False в іншому випадку'''
+        contact: Contact = self.find(name)
+        if not contact:
+            raise KeyError(f"Contact '{name}' not found.")
+        if contact.remove_notes():
+            logger.info(f"deleted notes from contact {contact.name}")
+            self._ischanged = True
+            return True
+        return False
+
+    def find_by_notes(self, keyword: str) -> list[Contact] | None:
+        '''Знаходить контакти за ключовим словом в нотатках
+        Args:
+            keyword (str): ключове слово для пошуку в нотатках
+        Returns:
+            list[Contact]: список контактів з вказаним
+            ключовим словом в нотатках або None, якщо не знайдено'''
+        return [contact for contact in self.data.values() if contact.notes and keyword in contact.notes]

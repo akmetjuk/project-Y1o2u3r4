@@ -232,7 +232,7 @@ class Contact:
     @property
     def notes(self) -> Notes | None:
         """Повертає нотатки контакту або None, якщо нотатки не встановлені"""
-        return self._notes
+        return self._notes.value if self._notes else None
 
     @notes.setter
     def notes(self, value: str) -> bool:
@@ -243,8 +243,6 @@ class Contact:
             bool: True, якщо нотатки оновлені успішно, False в іншому випадку
         '''
         if not value:
-            return False
-        if self._notes and self._notes.value == value:
             return False
         self._notes = Notes(value)
         return self.__changed()

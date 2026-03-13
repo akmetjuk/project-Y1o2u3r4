@@ -69,7 +69,7 @@ class Email(Field):
 
 class Tag(Field):
     def __init__(self, value: str):
-        super().__init__(value)
+        super().__init__(value.lower().strip())
 
     def __str__(self) -> str:
         init(autoreset=True)
@@ -78,7 +78,7 @@ class Tag(Field):
 
 class Notes(Field):
     def __init__(self, value: str):
-        super().__init__(value)
+        super().__init__(value.strip())
 
     def __str__(self) -> str:
         init(autoreset=True)

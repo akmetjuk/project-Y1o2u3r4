@@ -64,3 +64,27 @@ def test_add_tags():
 
     assert "friend" in contact.tags
     assert "colleague" in contact.tags
+
+def test_remove_tags():
+    contact: Contact = Contact("Diana")
+    contact.tags.add("family")
+    contact.tags.add("gym")
+
+    assert "family" in contact.tags
+    assert "gym" in contact.tags
+
+    contact.tags.remove("family")
+    assert "family" not in contact.tags
+
+def test_add_note():
+    contact: Contact = Contact("Eve")
+    contact.notes = "Likes hiking"
+
+    assert contact.notes == "Likes hiking"
+    contact.notes = "Also likes swimming"
+    assert contact.notes == "Also likes swimming"
+
+def test_notes_empty():
+    contact: Contact = Contact("Frank")
+    contact.pop_notes()
+    assert not contact.notes
