@@ -1,8 +1,6 @@
 from datetime import date, datetime
-
 from colorama import Fore, init
-
-from .fields import Email, Phone, Birthday, Address, Notes, Tag
+from .fields import Email, Phone, Birthday, Address, Notes
 from src.ContactHelper.utils import validate_phone_number, validate_email
 
 
@@ -17,7 +15,7 @@ class Contact:
         self._created_at: str = date.today().strftime("%Y-%m-%d %H:%M:%S")
         self._ischanged: bool = False
         self._changed_at: str = self._created_at
-        self._tags: set[Tag] = set()
+        self._tags: set[str] = set()
         self._notes: Notes = None
 
     def __str__(self) -> str:
@@ -51,7 +49,7 @@ class Contact:
 
     @property
     def created_date(self) -> datetime:
-        """Повертає дату створення контакту у форматі YYYY-MM-DD""" 
+        """Повертає дату створення контакту у форматі YYYY-MM-DD"""
         return datetime.strptime(self._created_at, "%Y-%m-%d %H:%M:%S").date()
 
     @property
@@ -87,16 +85,13 @@ class Contact:
         date = date.strip() if date else None
         if not date:
             return False
-        if self._birthday:
-            if self._birthday.value == date:
-                return False
         self._birthday = Birthday(date)
         return self.__changed()
 
     @property
-    def address(self) -> Address | None:
+    def address(self) -> str | None:
         """Повертає адресу контакту або None, якщо адреса не встановлена"""
-        return self._address
+        return self._address.value if self._address else None
 
     @address.setter
     def address(self, value: str) -> bool:
@@ -104,11 +99,8 @@ class Contact:
         Args:
             value (str): адреса для встановлення
         """
-        if not value or self._address.value == value:
+        if not value:
             return False
-        if self._address:
-            if self._address.value == value:
-                return False
         self._address = Address(value)
         return self.__changed()
 
@@ -177,10 +169,10 @@ class Contact:
         return self.__changed()
 
     @property
-    def email(self) -> Email:
+    def email(self) -> str | None:
         """Повертає електронну пошту контакту або None,
         якщо електронна пошта не встановлена"""
-        return self._email
+        return self._email.value if self._email else None
 
     @email.setter
     def email(self, value: str):
@@ -197,50 +189,46 @@ class Contact:
         email = validate_email(value)
         if not email:
             raise ValueError(f'Invalid email format: {email}')
-        if self._email == email:
+        if self._email and self._email.value == email:
             return False
-        self._email = email
+        self._email = Email(email)
         return self.__changed()
 
     @property
-    def tags(self) -> set[Tag]:
-        """Повертає набір тегів контакту або порожній набір,
-        якщо теги не встановлені"""
-        return self._tags
+    def tags(self) -> list[str]:
+        return list(self._tags)
 
-    @tags.setter
-    def tags(self, value: set[str]) -> bool:
-        '''Встановлює теги для контакту
+    def add_tag(self, tag: str) -> bool:
+        '''Встановлює тег для контакту
         Args:
-            value (set[str]): набір тегів для встановлення
+            tag (str): тег для встановлення
         Returns:
             bool: True, якщо теги оновлені успішно, False в іншому випадку
         '''
-        if not value:
+        tag = tag.lower().strip()
+        if not tag.isalnum():
             return False
-        new_tags: set[Tag] = set(Tag(tag) for tag in value)
-        if self._tags == new_tags:
-            return False
-        self._tags = new_tags
-        return self.__changed()
+        if tag and tag not in self._tags:
+            self._tags.add(tag)
+            self._tags = set(sorted(self._tags))
+            return self.__changed()
+        return False
 
-    def remove_tags(self, value: set[str]) -> bool:
-        '''Видаляє теги з контакту
+    def remove_tag(self, tag: str) -> bool:
+        '''Видаляє тег з контакту
         Args:
-            value (set[str]): набір тегів для видалення
+            tag (str): тег для видалення
         Returns:
             bool: True, якщо теги видалені успішно, False в іншому випадку
         '''
-        if not value:
-            return False
-        tags_to_remove: set[Tag] = set(Tag(tag) for tag in value)
-        if not tags_to_remove.issubset(self._tags):
-            return False
-        self._tags.difference_update(tags_to_remove)
-        return self.__changed()
+        tag = tag.strip()
+        if tag in self._tags:
+            self._tags.remove(tag)
+            return self.__changed()
+        return False
 
     @property
-    def notes(self) -> Notes | None:
+    def notes(self) -> str | None:
         """Повертає нотатки контакту або None, якщо нотатки не встановлені"""
         return self._notes.value if self._notes else None
 

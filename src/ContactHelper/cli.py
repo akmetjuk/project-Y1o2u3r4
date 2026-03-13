@@ -3,7 +3,9 @@ from src.ContactHelper.models.contact import Contact
 from src.ContactHelper.logger import setup_logger
 import difflib
 import pathlib
+from colorama import init, Fore
 
+init(autoreset=True)
 logger = setup_logger()
 logger.info("Application started")
 
@@ -19,64 +21,63 @@ The actual command handling is done in the main() function below.'''
 def format_contact(contact: Contact) -> str:
     """Повертає красивий рядок з усією інформацією про контакт."""
     lines = []
-    lines.append(f"Name: {contact.name}")
+    lines.append(f"{" "*4}{Fore.GREEN}Name{Fore.RESET}: {contact.name}")
 
     # телефони
     if contact.phones:
         phones_str = ", ".join(p.value for p in contact.phones)
     else:
         phones_str = "—"
-    lines.append(f"Phones: {phones_str}")
+    lines.append(f"{" "*4}{Fore.GREEN}Phones{Fore.RESET}: {phones_str}")
 
     # email
-    if contact.email:
-        # contact.email може бути або рядком, або полем з .value
-        email_str = getattr(contact.email, "value", contact.email)
-    else:
-        email_str = "—"
-    lines.append(f"Email: {email_str}")
+    email_str = contact.email if contact.email else "—"
+    lines.append(f"{" "*4}{Fore.GREEN}Email{Fore.RESET}: {email_str}")
 
     # birthday
-    if contact.birthday:
-        bd_str = getattr(contact.birthday, "value", contact.birthday)
-    else:
-        bd_str = "—"
-    lines.append(f"Birthday: {bd_str}")
+    bd_str = contact.birthday if contact.birthday else "—"
+    lines.append(f"{" "*4}{Fore.GREEN}Birthday{Fore.RESET}: {bd_str}")
 
     # address
     if contact.address:
-        addr_str = getattr(contact.address, "value", contact.address)
-    else:
-        addr_str = "—"
-    lines.append(f"Address: {addr_str}")
+        lines.append(f"{" "*4}{Fore.GREEN}Address{Fore.RESET}: {contact.address}")
+
+    # tags
+    if contact.tags:
+        tags_str = ", ".join(t.value for t in contact.tags)
+        lines.append(f"{" "*4}{Fore.GREEN}Tags{Fore.RESET}: {tags_str}")
+
+    # notes
+    if contact.notes:
+        lines.append(f"{" "*4}{Fore.GREEN}Note{Fore.RESET}: {contact.notes}")
 
     return "\n".join(lines)
 
 
 def print_help():
     print("Available commands:")
-    print("  help")
+    print(f"  {Fore.YELLOW}help{Fore.RESET}")
     print("      Show this help message.")
     print("")
-    print("  add <name> [phone] [email] [birthday]")
+    print(f"  {Fore.YELLOW}add{Fore.RESET} <name> [phone] [email] [birthday]")
     print("      Add new contact.")
     print("      birthday format: YYYY-MM-DD")
     print("")
-    print("  get <name>")
+    print(f"  {Fore.YELLOW}get{Fore.RESET} <name>")
     print("      Find contact by name.")
     print("")
-    print("  delete <name>")
+    print(f"  {Fore.YELLOW}delete{Fore.RESET} <name>")
     print("      Delete contact by name.")
     print("")
-    print("  set-birthday <name> <YYYY-MM-DD>")
+    print(f"  {Fore.YELLOW}set-birthday{Fore.RESET} <name> <YYYY-MM-DD>")
     print("      Set birthday for a contact.")
     print("")
-    print("  update-phone <name> <new_phone> [old_phone]")
+    print(f"  {Fore.YELLOW}update-phone{Fore.RESET} <name> <new_phone> [old_phone]")
     print("      Add or replace phone for a contact.")
     print("      new_phone format: +380XXXXXXXXX")
     print("      If old_phone given, it will be replaced.")
     print("")
-    print("  exit | quit")
+    print(f"  {Fore.YELLOW}exit{Fore.RESET} | {Fore.YELLOW}quit{Fore.RESET}")
     print("      Exit the program.")
     print("")
 
@@ -84,10 +85,12 @@ def print_help():
 def main():
     current_dir = pathlib.Path(__file__).parent
     adressbook_path: str = str(current_dir / "addressbook.pkl")
-
-    book = AddressBook.load_data(adressbook_path)  # Завантаження адресної книги при запуску програми
+    # Завантаження адресної книги при запуску програми
+    book = AddressBook.load_data(adressbook_path)
     print("Welcome to ContactHelper CLI!")
-    print("Type 'help' to see available commands.\n")
+    print(f"Varsion: {Fore.RED}{book.version}{Fore.RESET}",
+          f" | Contacs avaliable: {book.count}")
+    print(f"Type '{Fore.YELLOW}help{Fore.RESET}' to see available commands.\n")
 
     while True:
         user_input = input("Enter command: ").strip()
@@ -101,7 +104,8 @@ def main():
 
         # ===== exit / quit =====
         if command in ("exit", "quit"):
-            book.save_data(adressbook_path)  # Збереження адресної книги при виході з програми
+            # Збереження адресної книги при виході з програми
+            book.save_data(adressbook_path)
             print("Good bye!")
             break
 
@@ -199,8 +203,7 @@ def main():
             old_phone = args[2] if len(args) > 2 else None
 
             try:
-                result = book.update_phone(name, new_phone, phone=old_phone)
-                if result:
+                if book.update_phone(name, new_phone, old_phone):
                     if old_phone:
                         print(f"Phone '{old_phone}' for '{name}'",
                               f"replaced with '{new_phone}'.")
@@ -219,7 +222,8 @@ def main():
             if match:
                 print(f"Unknown command. Did you mean '{match[0]}'?")
             else:
-                print("Unknown command. Type 'help' to see available commands.")
+                print("Unknown command. Type 'help'",
+                      "to see available commands.")
 
 
 if __name__ == "__main__":

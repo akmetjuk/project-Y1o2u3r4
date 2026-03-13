@@ -38,6 +38,16 @@ def test_add_phone():
     assert len(contact.phones) == 1
     assert contact.phones[0].value == "+380123456789"
 
+def test_update_phone():
+    contact: Contact = Contact("Kate")
+    contact.change_phone("123456789")
+    assert contact.phones[0].value == "+380123456789"
+
+    contact.change_phone("987654321", "123456789")
+
+    assert len(contact.phones) == 1
+    assert contact.phones[0].value == "+380987654321"
+
 def test_incorrect_phone():
     contact: Contact = Contact("Tom")
     try:
@@ -57,24 +67,35 @@ def test_set_email():
     contact.email = "bob@example.com"
     assert contact.email == "bob@example.com"   
 
+def test_set_birthday():
+    contact: Contact = Contact("Charlie")
+    contact.birthday = "1990-08-15"
+    assert contact.birthday.value.strftime("%d.%m.%Y") == "15.08.1990"
+
+def test_set_address():
+    contact: Contact = Contact("Charlie")
+    contact.address = "Kyiv, Pryvokzalna str., 1A"
+    assert contact.address == "Kyiv, Pryvokzalna str., 1A"
+
+
 def test_add_tags():
     contact: Contact = Contact("Charlie")
-    contact.tags.add("friend")
-    contact.tags.add("colleague")
+    assert contact.add_tag("friend")
+    assert contact.add_tag("colleague")
 
-    assert "friend" in contact.tags
-    assert "colleague" in contact.tags
+    assert contact.tags.index("colleague") == 1
+    assert contact.tags.index("friend") == 0
 
 def test_remove_tags():
     contact: Contact = Contact("Diana")
-    contact.tags.add("family")
-    contact.tags.add("gym")
+    assert contact.add_tag("family")
+    assert contact.add_tag("gym")
 
-    assert "family" in contact.tags
-    assert "gym" in contact.tags
+    assert contact.tags.index("gym") >= 0
+    assert contact.tags.index("family") >= 1
 
-    contact.tags.remove("family")
-    assert "family" not in contact.tags
+    contact.remove_tag("gym")
+    assert contact.tags.index("family") == 0
 
 def test_add_note():
     contact: Contact = Contact("Eve")

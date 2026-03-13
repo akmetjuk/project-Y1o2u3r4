@@ -30,6 +30,11 @@ class AddressBook(UserDict):
         '''Повертає поточну версію адресної книги'''
         return self._version
 
+    @property
+    def count(self) -> int:
+        '''Повертає кількість записів в книзі'''
+        return len(self.data) if self.data else 0
+
     def find(self, name: str) -> Contact | None:
         """
         Знаходить запис за ім'ям.
@@ -70,7 +75,7 @@ class AddressBook(UserDict):
         Raises:
             ValueError якщо файл не вказаний або
             не знайдено або виникли проблеми з читанням файлу
-        """        
+        """
         if not filename:
             raise ValueError("Filename is not specified.")
         try:
@@ -81,8 +86,10 @@ class AddressBook(UserDict):
                 logger.info(f"Successfully loaded data from {filename}")
                 return book
         except FileNotFoundError:
-            logger.warning(f"File '{filename}' not found. Creating new AddressBook.")
-            return AddressBook()  # Повернення нової адресної книги, якщо файл не знайдено
+            # Повернення нової адресної книги, якщо файл не знайдено
+            logger.warning((f"File '{filename}' not found.",
+                           "Creating new AddressBook."))
+            return AddressBook()
 
     def get_upcoming_birthdays(self, days: int = 7) -> list[Contact] | None:
         """Отримати список користувачів з днями
@@ -105,7 +112,8 @@ class AddressBook(UserDict):
                 continue
             birthday: datetime = contact.birthday.value.replace(year=today.year).date()
 
-            # Якщо день народження вже минув цього року, розглядаємо наступний рік
+            # Якщо день народження вже минув цього року,
+            # розглядаємо наступний рік
             if birthday < today:
                 birthday = birthday.replace(year=birthday.year + 1)
 
@@ -121,7 +129,7 @@ class AddressBook(UserDict):
 
             upcoming.append(contact)
         return upcoming
-    
+
     def sorted_by(self, key: SortedKey) -> list[Contact]:
         """Отримати список контактів, відсортованих за вказаним ключем.
         Args:
@@ -142,7 +150,9 @@ class AddressBook(UserDict):
         elif key == SortedKey.MODIFICATION_DATE:
             sortedkey = lambda contact: contact.changed_date
         else:
-            raise ValueError(f"Invalid sort key '{key}'. Valid keys are {list((e.name.upper() for e in SortedKey))}.")
+            raise ValueError((
+                f"Invalid sort key '{key}'.",
+                f"Valid keys are {list((e.name.upper() for e in SortedKey))}."))
         return sorted(self.data.values(), key=sortedkey)
 
     def add_contact(self,
@@ -262,8 +272,8 @@ class AddressBook(UserDict):
         if not contact:
             raise KeyError(f"Contact '{name}' not found.")
         contact.address = address
-        logger.info(f"updated contact {contact.name}",
-                    f"address: {contact.address}")
+        logger.info((f"updated contact {contact.name}",
+                    f"address: {contact.address}"))
         self._ischanged = True
         return True
 
@@ -288,9 +298,11 @@ class AddressBook(UserDict):
             raise KeyError(f"Contact '{name}' not found.")
         if contact.change_phone(new_phone, phone):
             self._ischanged = True
-            logger.info(f"updated contact {contact.name}",
-                        f"phone:{contact.phone}",
+            logger.info(
+                (f"updated contact {contact.name}",
+                        f"phone:{new_phone}",
                         {f'replaced {phone}' if phone else 'added new'})
+                        )
             return True
         return False
 
@@ -316,7 +328,7 @@ class AddressBook(UserDict):
             return True
         return False
 
-    def add_tag(self, name: str, tags: str) -> bool:
+    def add_tag(self, name: str, tag: str) -> bool:
         '''Додає тег для контакту
         Args:
             name (str): ім'я контакту для якого
@@ -330,8 +342,8 @@ class AddressBook(UserDict):
         if not contact:
             raise KeyError(f"Contact '{name}' not found.")
         try:
-            contact.tags = set(tags.split(' '))
-            logger.info(f"added tag {tags} to contact {contact.name}")
+            contact.add_tag(tag)
+            logger.info(f"added tag {tag} to contact {contact.name}")
             self._ischanged = True
             return True
         except AttributeError:
@@ -361,8 +373,10 @@ class AddressBook(UserDict):
         Args:
             tag (str): тег для пошуку
         Returns:
-            list[Contact]: список контактів з вказаним тегом або None, якщо не знайдено'''
-        return [contact for contact in self.data.values() if tag in contact.tags]
+            list[Contact]: список контактів з вказаним
+            тегом або None, якщо не знайдено'''
+        return [contact for contact
+                in self.data.values() if tag in contact.tags]
 
     def set_notes(self, name: str, notes: str) -> bool:
         '''Додає нотатку для контакту
@@ -410,4 +424,5 @@ class AddressBook(UserDict):
         Returns:
             list[Contact]: список контактів з вказаним
             ключовим словом в нотатках або None, якщо не знайдено'''
-        return [contact for contact in self.data.values() if contact.notes and keyword in contact.notes]
+        return [contact for contact in self.data.values()
+                if contact.notes and keyword in contact.notes]
