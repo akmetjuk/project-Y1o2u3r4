@@ -1,5 +1,7 @@
 from collections import UserDict
+from datetime import datetime, timedelta
 import pickle
+from ContactHelper.models.enums import SortedKey
 from src.ContactHelper.models.contact import Contact
 import logging
 
@@ -95,7 +97,53 @@ class AddressBook(UserDict):
         """
         if not isinstance(days, int) or not (1 <= days <= 365):
             raise ValueError("Days must be an integer between 1 and 365")
-        return None
+        today: datetime = datetime.today().date()
+
+        upcoming = list()
+        for contact in self.data.values():
+            if not contact.birthday:
+                continue
+            birthday: datetime = contact.birthday.value.replace(year=today.year).date()
+
+            # Якщо день народження вже минув цього року, розглядаємо наступний рік
+            if birthday < today:
+                birthday = birthday.replace(year=birthday.year + 1)
+
+            days_between: int = birthday.toordinal() - today.toordinal()
+            # Розглядаємо дні народження на наступні days днів
+            if days_between > days:
+                continue
+
+            # Якщо день народження на вихідний, переносимо на понеділок
+            weekday: int = birthday.weekday()
+            if weekday > 4:
+                birthday = birthday + timedelta(days=(7 - weekday))
+
+            upcoming.append(contact)
+        return upcoming
+    
+    def sorted_by(self, key: SortedKey) -> list[Contact]:
+        """Отримати список контактів, відсортованих за вказаним ключем.
+        Args:
+            key: Ключ для сортування ('name', 'birthday', 'tags')
+        Returns:
+            Список записів, відсортованих за вказаним ключем
+        """
+        if not self.data:
+            return []
+        if key == SortedKey.NAME:
+            sortedkey = lambda contact: contact.name.value.lower()
+        elif key == SortedKey.BIRTHDAY:
+            sortedkey = lambda contact: contact.birthday.value if contact.birthday else datetime.max
+        elif key == SortedKey.TAG:
+            sortedkey = lambda contact: sorted(contact.tags)
+        elif key == SortedKey.CREATION_DATE:
+            sortedkey = lambda contact: contact.created_date
+        elif key == SortedKey.MODIFICATION_DATE:
+            sortedkey = lambda contact: contact.changed_date
+        else:
+            raise ValueError(f"Invalid sort key '{key}'. Valid keys are {list((e.name.upper() for e in SortedKey))}.")
+        return sorted(self.data.values(), key=sortedkey)
 
     def add_contact(self,
                     name: str,

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from colorama import Fore, init
 
@@ -50,10 +50,20 @@ class Contact:
         return self._created_at
 
     @property
+    def created_date(self) -> datetime:
+        """Повертає дату створення контакту у форматі YYYY-MM-DD""" 
+        return datetime.strptime(self._created_at, "%Y-%m-%d %H:%M:%S").date()
+
+    @property
     def changed_at(self) -> str:
         """Повертає дату та час останнього змінення
         контакту у форматі YYYY-MM-DD HH:MM:SS"""
         return self._changed_at
+
+    @property
+    def changed_date(self) -> datetime:
+        """Повертає дату останнього змінення контакту у форматі YYYY-MM-DD"""
+        return datetime.strptime(self._changed_at, "%Y-%m-%d %H:%M:%S").date()
 
     @property
     def name(self) -> str:
