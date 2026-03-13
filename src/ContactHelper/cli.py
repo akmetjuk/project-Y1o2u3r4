@@ -101,6 +101,7 @@ def main():
 
         # ===== exit / quit =====
         if command in ("exit", "quit"):
+            book.save_data(adressbook_path)  # Збереження адресної книги при виході з програми
             print("Good bye!")
             break
 

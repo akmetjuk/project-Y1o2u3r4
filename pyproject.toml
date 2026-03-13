@@ -13,3 +13,6 @@ dependencies = ["colorama"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.scripts]
+contacthelper = "ContactHelper.cli:main"
