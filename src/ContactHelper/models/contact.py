@@ -72,7 +72,7 @@ class Contact:
     def birthday(self) -> str | None:
         """Повертає дату народження контакту в форматі YYYY-MM-DD
         або None, якщо дата народження не встановлена"""
-        return self._birthday
+        return self._birthday.value.strftime('%Y-%m-%d') if self._birthday else None
 
     @birthday.setter
     def birthday(self, date: str) -> bool:
@@ -226,6 +226,12 @@ class Contact:
             self._tags.remove(tag)
             return self.__changed()
         return False
+
+    def clear_tags(self) -> bool:
+        '''Видаляє всі tag що є у контакта
+        '''
+        self._tags = set()
+        return self.__changed()
 
     @property
     def notes(self) -> str | None:

@@ -1,6 +1,6 @@
 from ContactHelper.core import AddressBook
 from ContactHelper.models.contact import Contact
-
+from datetime import datetime, timedelta
 
 def test_logger_setup():
     from ContactHelper.logger import setup_logger
@@ -70,7 +70,7 @@ def test_set_email():
 def test_set_birthday():
     contact: Contact = Contact("Charlie")
     contact.birthday = "1990-08-15"
-    assert contact.birthday.value.strftime("%d.%m.%Y") == "15.08.1990"
+    assert contact.birthday == "1990-08-15"
 
 def test_set_address():
     contact: Contact = Contact("Charlie")
@@ -79,7 +79,8 @@ def test_set_address():
 
 
 def test_add_tags():
-    contact: Contact = Contact("Charlie")
+    contact: Contact = Contact("Charlie-with-tags")
+    contact.clear_tags()
     assert contact.add_tag("friend")
     assert contact.add_tag("colleague")
 
@@ -87,7 +88,8 @@ def test_add_tags():
     assert contact.tags.index("friend") == 0
 
 def test_remove_tags():
-    contact: Contact = Contact("Diana")
+    contact: Contact = Contact("Diana-with-tags")
+    contact.clear_tags()
     assert contact.add_tag("family")
     assert contact.add_tag("gym")
 
@@ -109,3 +111,24 @@ def test_notes_empty():
     contact: Contact = Contact("Frank")
     contact.pop_notes()
     assert not contact.notes
+
+def test_upcoming_birthdays():
+    book: AddressBook = AddressBook()
+    today: datetime = datetime.today().date()
+    next_bd = today + timedelta (days=8)
+    book.add_contact(name="Mike#3", birthday=f"2002-{next_bd.month}-{next_bd.day}")
+    next_bd = today + timedelta (days=3)
+    book.add_contact(name="Alise#1", birthday=f"2002-{next_bd.month}-{next_bd.day}")
+    next_bd = today + timedelta (days=6)
+    book.add_contact(name="Zoltan#2", birthday=f"2002-{next_bd.month}-{next_bd.day}")
+    next_bd = today + timedelta (weeks=16)
+    book.add_contact(name="Geralt#4", birthday=f"2012-{next_bd.month}-{next_bd.day}")
+
+    upcome_db = book.get_upcoming_birthdays(days = 364)
+    
+    assert len(upcome_db) > 0
+    assert upcome_db[0].name == "Alise#1"
+    assert upcome_db[1].name == "Zoltan#2"
+    assert upcome_db[2].name == "Mike#3"
+    assert upcome_db[3].name == "Geralt#4"
+    

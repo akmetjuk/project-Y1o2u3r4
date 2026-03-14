@@ -11,7 +11,7 @@ logger.info("Application started")
 
 __commands__ = ["add", "get", "delete",
                 "update-phone",
-                "set-birthday",
+                "set-birthday", "upcome-birthdays",
                 "help", "quit", "exit"]
 '''List of available commands for CLI.
 This is just a reference and not used in code.
@@ -53,6 +53,21 @@ def format_contact(contact: Contact) -> str:
 
     return "\n".join(lines)
 
+def upcome_birthdays(args: list[str], book: AddressBook):
+    if len(args) == 0:
+        days = 7
+    else:
+        try:
+            days = int(args[0])
+        except ValueError:
+            print(f"Invalid number of days ({days}). Please provide a valid integer.")
+            return
+    bdays: list[Contact] = book.get_upcoming_birthdays(days)
+    if bdays == None or len(bdays) == 0:
+        print(f"No upcoming birthdays next {days} days.")
+        return
+    print(f"You have {len(bdays)} birthdays next {days} days:")
+    print("\n".join(f"{(" " * 4)}Contact {Fore.YELLOW}'{c.name}'{Fore.RESET} has birthday on {Fore.GREEN}{c.birthday}{Fore.RESET}." for c in bdays))
 
 def print_help():
     print("Available commands:")
@@ -72,6 +87,9 @@ def print_help():
     print(f"  {Fore.YELLOW}set-birthday{Fore.RESET} <name> <YYYY-MM-DD>")
     print("      Set birthday for a contact.")
     print("")
+    print(f"  {Fore.YELLOW}upcome-birthdays{Fore.RESET} <days>")
+    print("      Get contacts with birthdays within <days>.")
+    print("")
     print(f"  {Fore.YELLOW}update-phone{Fore.RESET} <name> <new_phone> [old_phone]")
     print("      Add or replace phone for a contact.")
     print("      new_phone format: +380XXXXXXXXX")
@@ -80,7 +98,6 @@ def print_help():
     print(f"  {Fore.YELLOW}exit{Fore.RESET} | {Fore.YELLOW}quit{Fore.RESET}")
     print("      Exit the program.")
     print("")
-
 
 def main():
     current_dir = pathlib.Path(__file__).parent
@@ -191,6 +208,10 @@ def main():
                 print(f"Validation error: {e}")
             except Exception as e:
                 print(f"Error while setting birthday: {e}")
+
+        # ===== upcome-birthdays =====
+        elif command == "upcome-birthdays":
+            upcome_birthdays(args, book)
 
         # ===== update-phone =====
         elif command == "update-phone":

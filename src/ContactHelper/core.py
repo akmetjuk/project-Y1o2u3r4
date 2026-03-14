@@ -105,12 +105,14 @@ class AddressBook(UserDict):
         if not isinstance(days, int) or not (1 <= days <= 365):
             raise ValueError("Days must be an integer between 1 and 365")
         today: datetime = datetime.today().date()
+        birthday: datetime
 
-        upcoming = list()
+        upcoming: list[tuple[int, Contact]] = []
         for contact in self.data.values():
             if not contact.birthday:
                 continue
-            birthday: datetime = contact.birthday.value.replace(year=today.year).date()
+            birthday = datetime.strptime(contact.birthday, "%Y-%m-%d").date()
+            birthday = birthday.replace(year=today.year)
 
             # Якщо день народження вже минув цього року,
             # розглядаємо наступний рік
@@ -126,9 +128,12 @@ class AddressBook(UserDict):
             weekday: int = birthday.weekday()
             if weekday > 4:
                 birthday = birthday + timedelta(days=(7 - weekday))
+                days_between = birthday.toordinal() - today.toordinal()
 
-            upcoming.append(contact)
-        return upcoming
+            upcoming.append((days_between, contact))
+
+        upcoming.sort(key=lambda x: x[0])
+        return [contact for _, contact in upcoming]
 
     def sorted_by(self, key: SortedKey) -> list[Contact]:
         """Отримати список контактів, відсортованих за вказаним ключем.
@@ -142,7 +147,7 @@ class AddressBook(UserDict):
         if key == SortedKey.NAME:
             sortedkey = lambda contact: contact.name.value.lower()
         elif key == SortedKey.BIRTHDAY:
-            sortedkey = lambda contact: contact.birthday.value if contact.birthday else datetime.max
+            sortedkey = lambda contact: contact.birthday if contact.birthday else datetime.max
         elif key == SortedKey.TAG:
             sortedkey = lambda contact: sorted(contact.tags)
         elif key == SortedKey.CREATION_DATE:
@@ -231,8 +236,8 @@ class AddressBook(UserDict):
         if not contact:
             raise KeyError(f"Contact '{name}' not found.")
         contact.birthday = date
-        logger.info(f"updated contact {contact.name}",
-                    f"birthday: {contact.birthday}")
+        logger.info((f"updated contact {contact.name}",
+                    f"birthday: {contact.birthday}"))
         self._ischanged = True
         return True
 
@@ -348,6 +353,24 @@ class AddressBook(UserDict):
             return True
         except AttributeError:
             raise ValueError("Invalid tag format.")
+
+    def clear_tags(self, name: str) -> bool:        
+        '''Видаляє теги для контакту
+        Args:
+            name (str): ім'я контакту для якого
+            потрібно видалити тег
+        Raises:
+            ValueError: якщо контакт з вказаним ім'ям не знайдено
+        Returns:
+            bool: True, якщо теги видалено, False в іншому випадку'''
+        contact: Contact = self.find(name)
+        if not contact:
+            raise KeyError(f"Contact '{name}' not found.")
+        if contact.clear_tags():
+            logger.info(f"deleted all tags from contact {contact.name}")
+            self._ischanged = True
+            return True
+        return False
 
     def delete_tag(self, name: str, tag: str) -> bool:
         '''Видаляє тег для контакту
