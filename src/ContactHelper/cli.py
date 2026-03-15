@@ -12,11 +12,26 @@ logger.info("Application started")
 __commands__ = ["add", "get", "delete",
                 "update-phone",
                 "set-birthday", "upcome-birthdays",
+                "set-note", 
+                "set-email",
+                "set-address",
+                "add-tag", "delete-tag"
                 "help", "quit", "exit"]
 '''List of available commands for CLI.
 This is just a reference and not used in code.
 The actual command handling is done in the main() function below.'''
 
+def input_error(func):
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValueError as e:
+            return f"ValueError: {e}"
+        except KeyError as e:
+            return f"Key error: {e}"
+        except IndexError:
+            return "Enter the argument for the command"
+    return inner
 
 def format_contact(contact: Contact) -> str:
     """Повертає красивий рядок з усією інформацією про контакт."""
@@ -44,7 +59,7 @@ def format_contact(contact: Contact) -> str:
 
     # tags
     if contact.tags:
-        tags_str = ", ".join(t.value for t in contact.tags)
+        tags_str = ", ".join(t for t in contact.tags)
         lines.append(f"{" "*4}{Fore.GREEN}Tags{Fore.RESET}: {tags_str}")
 
     # notes
@@ -68,35 +83,123 @@ def upcome_birthdays(args: list[str], book: AddressBook):
         return
     print(f"You have {len(bdays)} birthdays next {days} days:")
     print("\n".join(f"{(" " * 4)}Contact {Fore.YELLOW}'{c.name}'{Fore.RESET} has birthday on {Fore.GREEN}{c.birthday}{Fore.RESET}." for c in bdays))
+## "set-note", "add-tag", "get-tag","delete-tag"
+
+@input_error
+def set_note(args: list[str], book: AddressBook):
+    if len(args) < 1:
+        raise IndexError("Usage: add <name> <note text>")
+
+    name = args[0]
+    note = (" ".join(args[1:])).strip()
+    if not note:
+        print(f"Noote text is empty")
+        return
+    try:
+        if book.set_notes(name,note):
+            print(f"You add notes to the '{name}'")            
+    except Exception as  e:
+        print(e)
+
+@input_error
+def set_email(args: list[str], book: AddressBook):
+    if len(args) < 1:
+        raise IndexError("Usage: add <name> <email>")
+    email = args[1]
+    name = args[0]
+    try:
+        book.set_email(name, email)
+    except Exception as  e:
+        print(e)
+        return
+    print(f"You set email: {email} to the '{name}'")
+
+@input_error
+def set_address(args: list[str], book: AddressBook):
+    if len(args) < 1:
+        raise IndexError("Usage: add <name> <email>")
+    name = args[0]
+    address = (" ".join(args[1:])).strip()
+    try:
+        book.set_address(name, address)
+    except Exception as  e:
+        print(e)
+        return
+    print(f"You set address: {address} to the '{name}'")
+
+@input_error
+def add_tag(args: list[str], book: AddressBook):
+    if len(args) < 1:
+        raise IndexError("Usage: add <name> <tag>")
+    tags = []
+    name = args[0]
+    for t in args[1:]:
+        try:
+            if book.add_tag(name, t):
+                tags.append(t.strip())
+        except Exception as  e:
+            print(e)
+            return
+    print(f"You add tags: {", ".join(tags)} to the '{name}'")
+
+@input_error
+def delete_tag(args: list[str], book: AddressBook):
+    if len(args) < 1:
+        raise IndexError("Usage: add <name> <tag>")
+    tags = []
+    name = args[0]
+    for t in args[1:]:
+        try:
+            if book.delete_tag(name, t):
+                tags.append(t.strip())
+        except Exception as  e:
+            print(e)
+            return
+    print(f"You remove tags: {", ".join(tags)} from the '{name}'")
 
 def print_help():
     print("Available commands:")
-    print(f"  {Fore.YELLOW}help{Fore.RESET}")
-    print("      Show this help message.")
+    print(f"{" "*4}{Fore.YELLOW}help{Fore.RESET}")
+    print(f"{" "*8}Show this help message.")
     print("")
-    print(f"  {Fore.YELLOW}add{Fore.RESET} <name> [phone] [email] [birthday]")
-    print("      Add new contact.")
-    print("      birthday format: YYYY-MM-DD")
+    print(f"{" "*4}{Fore.YELLOW}add{Fore.RESET} <name> [phone] [email] [birthday]")
+    print(f"{" "*8}Add new contact.")
+    print(f"{" "*8}birthday format: YYYY-MM-DD")
     print("")
-    print(f"  {Fore.YELLOW}get{Fore.RESET} <name>")
-    print("      Find contact by name.")
+    print(f"{" "*4}{Fore.YELLOW}get{Fore.RESET} <name>")
+    print(f"{" "*8}Find contact by name.")
     print("")
-    print(f"  {Fore.YELLOW}delete{Fore.RESET} <name>")
-    print("      Delete contact by name.")
+    print(f"{" "*4}{Fore.YELLOW}delete{Fore.RESET} <name>")
+    print(f"{" "*8}Delete contact by name.")
     print("")
-    print(f"  {Fore.YELLOW}set-birthday{Fore.RESET} <name> <YYYY-MM-DD>")
-    print("      Set birthday for a contact.")
+    print(f"{" "*4}{Fore.YELLOW}set-email{Fore.RESET} <name> <email>")
+    print(f"{" "*8}Set email <email> for a contact <name>")
     print("")
-    print(f"  {Fore.YELLOW}upcome-birthdays{Fore.RESET} <days>")
-    print("      Get contacts with birthdays within <days>.")
+    print(f"{" "*4}{Fore.YELLOW}set-birthday{Fore.RESET} <name> <YYYY-MM-DD>")
+    print(f"{" "*8}Set birthday for a contact.")
     print("")
-    print(f"  {Fore.YELLOW}update-phone{Fore.RESET} <name> <new_phone> [old_phone]")
-    print("      Add or replace phone for a contact.")
-    print("      new_phone format: +380XXXXXXXXX")
-    print("      If old_phone given, it will be replaced.")
+    print(f"{" "*4}{Fore.YELLOW}set-address{Fore.RESET} <name> <address>")
+    print(f"{" "*8}Set address for a contact.")
     print("")
-    print(f"  {Fore.YELLOW}exit{Fore.RESET} | {Fore.YELLOW}quit{Fore.RESET}")
-    print("      Exit the program.")
+    print(f"{" "*4}{Fore.YELLOW}upcome-birthdays{Fore.RESET} <days>")
+    print(f"{" "*8}Get contacts with birthdays within <days>.")
+    print("")
+    print(f"{" "*4}{Fore.YELLOW}update-phone{Fore.RESET} <name> <new_phone> [old_phone]")
+    print(f"{" "*8}Add or replace phone for a contact.")
+    print(f"{" "*8}new_phone format: +380XXXXXXXXX")
+    print(f"{" "*8}If old_phone given, it will be replaced.")
+    print("")
+    print(f"{" "*4}{Fore.YELLOW}set-note{Fore.RESET} <name> <note text>")
+    print(f"{" "*8}Set note <note text> for a contact <name>")
+    print("")
+    print(f"{" "*4}{Fore.YELLOW}add-tag{Fore.RESET} <name> <tag>")
+    print(f"{" "*8}Set tag for a contact <name>")
+    print("")
+    print(f"{" "*4}{Fore.YELLOW}delete-tag{Fore.RESET} <name> <tag>")
+    print(f"{" "*8}Delete specified <tag> from a contact <name>")
+    print("")
+    print(f"{" "*4}{Fore.YELLOW}exit{Fore.RESET} | {Fore.YELLOW}quit{Fore.RESET}")
+    print(f"{" "*8}Exit the program.")
     print("")
 
 def main():
@@ -209,9 +312,24 @@ def main():
             except Exception as e:
                 print(f"Error while setting birthday: {e}")
 
+        elif command == "set-email":
+            set_email(args, book)
+
+        elif command == "set-address":
+            set_address(args, book)
+
         # ===== upcome-birthdays =====
         elif command == "upcome-birthdays":
             upcome_birthdays(args, book)
+
+        elif command == "set-note":
+            set_note(args, book)
+
+        elif command == "add-tag":
+            add_tag(args, book)
+
+        elif command == "delete-tag":
+            delete_tag(args, book)
 
         # ===== update-phone =====
         elif command == "update-phone":
