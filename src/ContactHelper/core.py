@@ -52,9 +52,10 @@ class AddressBook(UserDict):
             keyword: частина ім'я контакту для пошуку
         '''
         name = keyword.strip().lower()
+        ret = self.sorted_by(SortedKey.NAME)
         return [
             contact
-            for contact in self.data.values()
+            for contact in ret
             if name in contact.name.lower()
         ]
 
@@ -157,7 +158,7 @@ class AddressBook(UserDict):
         if not self.data:
             return []
         if key == SortedKey.NAME:
-            sortedkey = lambda contact: contact.name.value.lower()
+            sortedkey = lambda contact: contact.name.lower()
         elif key == SortedKey.BIRTHDAY:
             sortedkey = lambda contact: contact.birthday if contact.birthday else datetime.max
         elif key == SortedKey.TAG:
@@ -366,7 +367,7 @@ class AddressBook(UserDict):
         except AttributeError:
             raise ValueError("Invalid tag format.")
 
-    def clear_tags(self, name: str) -> bool:        
+    def clear_tags(self, name: str) -> bool:
         '''Видаляє теги для контакту
         Args:
             name (str): ім'я контакту для якого

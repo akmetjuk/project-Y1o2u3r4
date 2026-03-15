@@ -57,7 +57,8 @@ def format_contact(contact: Contact) -> str:
 
     # address
     if contact.address:
-        lines.append(f"{" "*4}{Fore.GREEN}Address{Fore.RESET}: {contact.address}")
+        lines.append(f"{" "*4}{Fore.GREEN}Address{Fore.RESET}:",
+                     f"{contact.address}")
 
     # tags
     if contact.tags:
@@ -67,6 +68,45 @@ def format_contact(contact: Contact) -> str:
     # notes
     if contact.notes:
         lines.append(f"{" "*4}{Fore.GREEN}Note{Fore.RESET}: {contact.notes}")
+
+    return "\n".join(lines)
+
+
+def format_contacts_table(contacts: list[Contact]) -> str:
+    """Return a table-like string for a list of contacts.
+
+    This is useful for rendering search results or lists in console output.
+    """
+
+    if not contacts:
+        return "No contacts to show."
+
+    headers = ["Name", "Phone", "Email", "Birthday", "Updated"]
+    rows: list[list[str]] = []
+
+    for c in contacts:
+        phone = None
+        if c.phones:
+            phone = c.phones[0]
+        rows.append([c.name,
+                     phone or "- ", c.email or "- ",
+                     c.birthday or "- ",
+                     c.changed_date.strftime("%Y-%m-%d")])
+
+    # Calculate column widths
+    widths = [
+        max(len(str(value)) for value in col)
+        for col in zip(headers, *rows)
+    ]
+
+    sep = " | "
+    header_line = sep.join(h.ljust(widths[i]) for i, h in enumerate(headers))
+    divider = "-+-".join("-" * w for w in widths)
+
+    lines = [header_line, divider]
+    for row in rows:
+        lines.append(sep.join(str(cell).ljust(widths[i])
+                              for i, cell in enumerate(row)))
 
     return "\n".join(lines)
 
@@ -86,7 +126,7 @@ def upcome_birthdays(args: list[str], book: AddressBook):
         print(f"No upcoming birthdays next {days} days.")
         return
     print(f"You have {len(bdays)} birthdays next {days} days:")
-    print("\n".join(f"{(" " * 4)}Contact {Fore.YELLOW}'{c.name}'{Fore.RESET} has birthday on {Fore.GREEN}{c.birthday}{Fore.RESET}." for c in bdays))
+    print(format_contacts_table(bdays))
 
 
 @input_error
