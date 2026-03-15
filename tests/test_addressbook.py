@@ -132,3 +132,13 @@ def test_upcoming_birthdays():
     assert upcome_db[2].name == "Mike#3"
     assert upcome_db[3].name == "Geralt#4"
     
+def test_find_by_name():
+    book: AddressBook = AddressBook()
+    book.add_contact(name="Mike#3")
+    book.add_contact(name="Alise#1")
+    book.add_contact(name="Asman#1")
+    book.add_contact(name="Andrii#2")
+    book.add_contact(name="Taras#4")
+
+    result = book.search_by_name("as")
+    assert len(result) == 2

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pickle
 from ContactHelper.models.enums import SortedKey
 from src.ContactHelper.models.contact import Contact
+from src.ContactHelper.utils import validate_phone_number
 import logging
 
 
@@ -44,6 +45,18 @@ class AddressBook(UserDict):
             Знайдений об'єкт Contact або None, якщо не знайдено
         """
         return self.data.get(str.lower(name).strip())
+
+    def search_by_name(self, keyword: str) -> list[Contact] | None:
+        '''Пошук за входженням символів keyword в ім'я контакту
+        Args:
+            keyword: частина ім'я контакту для пошуку
+        '''
+        name = keyword.strip().lower()
+        return [
+            contact
+            for contact in self.data.values()
+            if name in contact.name.lower()
+        ]
 
     def save_data(self, filename: str) -> bool:
         '''Зберігає дані адресної книги у файл
@@ -128,7 +141,6 @@ class AddressBook(UserDict):
             weekday: int = birthday.weekday()
             if weekday > 4:
                 birthday = birthday + timedelta(days=(7 - weekday))
-                days_between = birthday.toordinal() - today.toordinal()
 
             upcoming.append((days_between, contact))
 
@@ -401,6 +413,21 @@ class AddressBook(UserDict):
         return [contact for contact
                 in self.data.values() if tag in contact.tags]
 
+    def find_by_phone(self, phone: str) -> list[Contact] | None:
+        '''Знаходить контакти за телефоном
+        Args:
+            phone (str): телефон для пошуку
+        Returns:
+            list[Contact]: список контактів з вказаним
+            телефоном або None, якщо не знайдено'''
+        ph: str = validate_phone_number(phone)
+        ret = []
+        for c in self.data.values():
+            for p in c.phones:
+                if p.value == ph:
+                    ret.append(c)
+        return ret if len(ret) > 0 else None
+
     def set_notes(self, name: str, notes: str) -> bool:
         '''Додає нотатку для контакту
         Args:
@@ -434,7 +461,7 @@ class AddressBook(UserDict):
         contact: Contact = self.find(name)
         if not contact:
             raise KeyError(f"Contact '{name}' not found.")
-        if contact.remove_notes():
+        if contact.pop_notes():
             logger.info(f"deleted notes from contact {contact.name}")
             self._ischanged = True
             return True
